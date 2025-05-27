@@ -1,0 +1,116 @@
+# 《内网提权的多种方法及博客参考》
+
+
+### 利用系统漏洞提权
+
+*   **Windows 系统漏洞**
+
+*   **MS17 - 010（永恒之蓝）**：利用 SMB 服务漏洞，通过发送特制的数据包，可在未打补丁的 Windows 系统上远程执行代码，进而获取 system 权限。在攻击时，可使用 Metasploit 框架中的相关模块进行利用。参考博客：[永恒之蓝（CVE-2017-0146）复现（超详细）](https://blog.csdn.net/qq_73252299/article/details/133143917)。
+
+*   **MS16 - 032**：该漏洞允许低权限用户通过滥用 PowerShell 特权来提升权限。攻击者可以利用此漏洞在受影响的 Windows 7/8/10 等系统上执行任意代码。参考博客：[MS16-032 提权 漏洞复现](https://blog.csdn.net/adminxe/article/details/106754010)。
+
+*   **CVE - 2021 - 34527（PrintNightmare）**：这是 Windows 打印服务中的漏洞，影响从 Windows Server 2008 到 2022 的多个版本。攻击者可利用此漏洞在目标系统上以 system 权限执行任意代码。参考博客：[Windows Print Spooler服务最新漏洞CVE-2021-34527详细分析](https://www.freebuf.com/articles/system/280340.html)。
+
+
+*   **Linux 系统漏洞**
+
+*   **脏牛（Dirty Cow，CVE - 2016 - 5195）**：利用内存子系统中的漏洞，通过写入时复制（copy - on - write）机制的竞争条件，可在内核内存中修改只读页面。影响 2.6.22 至 4.8.3 内核版本的 Linux 系统。参考博客：[Linux脏牛(CVE-2016-5195)提权保姆级教程](https://blog.csdn.net/weixin_68408599/article/details/132332072)。
+
+*   **PwnKit（CVE - 2021 - 4034）**：Polkit 的 pkexec 命令存在漏洞，攻击者可以利用该漏洞在无需特权的情况下获取 root 权限。参考博客：[CVE-2021-4034：Linux Polkit 权限提升漏洞复现及修复](https://blog.csdn.net/laobanjiull/article/details/122715651)。
+
+*   **Sudo 漏洞（如 CVE - 2019 - 14287）**：某些版本的 Sudo 在处理环境变量时存在漏洞，攻击者可以通过精心构造环境变量，绕过 Sudo 的权限限制，以 root 权限执行命令。参考博客：[CVE-2019-14287：sudo权限绕过漏洞分析与复现](https://www.freebuf.com/vuls/217089.html)。
+
+
+### 利用服务与应用程序提权
+
+*   **弱权限服务**：检查可被低权限用户修改的服务配置。在 Windows 中，可以通过 PowerShell 的`Get - Service`命令查看服务，使用`sc config`命令修改服务配置。例如，将服务的启动路径修改为恶意程序的路径，当服务启动时，就会执行恶意程序，从而获取服务的权限，通常是 system 权限。参考博客：[Windows 提权-服务\_弱注册表权限](https://blog.csdn.net/weixin_40825728/article/details/147718221)。
+
+
+*   **未签名驱动加载**：在 Windows 系统中，如果攻击者具有 SeLoadDriverPrivilege 权限，就可以加载未签名的驱动程序。通过编写恶意驱动程序，并利用该权限加载，可以在内核层执行代码，实现权限提升。参考博客：[新生吃老饭之无签驱动的两种加载方式](https://www.freebuf.com/articles/paper/281035.html)。
+
+
+*   **数据库服务提权**
+
+*   **MySQL**：当`secure_file_priv`配置不当，例如设置为空或者可写目录时，攻击者可以利用`SELECT ... INTO OUTFILE`语句将恶意的 UDF（用户定义函数）文件写入到指定目录，然后通过创建函数来执行系统命令，实现提权。参考博客：[MySQL UDF 提权](https://blog.csdn.net/qq_44159028/article/details/121193134)。
+
+*   **MSSQL**：利用`xp_cmdshell`扩展存储过程，攻击者可以在 MSSQL 数据库中执行系统命令。如果数据库用户具有足够的权限，就可以通过调用`xp_cmdshell`来提升权限。参考博客：[通过Mssql提权的几种姿势](https://www.cnblogs.com/N0r4h/p/12889944.html)。
+
+
+### 利用权限滥用与配置错误提权
+
+*   **高权限令牌窃取**
+
+*   **Windows**：使用`Incognito`或`Mimikatz`等工具可以窃取已登录用户的令牌。例如，通过`Mimikatz`的`sekurlsa::logonpasswords`命令可以获取当前系统中已登录用户的明文密码或 NTLM 哈希，然后使用`sekurlsa::pth`命令进行哈希传递攻击，获取高权限令牌。参考博客：[内网渗透之哈希(hash)传递攻击原理及其详解（PTH攻击）](https://blog.csdn.net/2302_80514516/article/details/147425839?fromshare=blogdetail\&sharetype=blogdetail\&sharerId=147425839\&sharerefer=PC\&sharesource=m0_52016680\&sharefrom=from_link)。
+
+*   **Linux**：利用`ptrace`权限可以跟踪其他进程，从而获取其内存中的信息，包括令牌等。此外，一些`suid`文件漏洞也可以被利用来提升权限，例如通过修改`suid`文件的权限或利用其执行特性来获取 root 权限。参考博客：[Linux ‘PTRACE\_TRACEME’提权漏洞（CVE-2019-13272）分析](https://www.anquanke.com/post/id/223999)。
+
+
+*   **不安全的文件权限**
+
+*   **SUID/SGID 文件**：在 Linux 系统中，通过查找具有`suid`或`sgid`权限的文件，如`/usr/bin/passwd`等。如果发现可被利用的文件，可以尝试通过特定的方法来执行命令，以获取文件所有者或所属组的权限。例如，使用`find`命令查找具有`suid`权限的文件：`find / -user root -perm -4000 -print 2>/dev/null`。参考博客：[Linux SUID 提权](https://blog.csdn.net/qq_63844103/article/details/128913977)。
+
+*   **可写配置文件**：在 Windows 和 Linux 系统中，可写的配置文件都可能成为提权的突破口。例如，在 Windows 中，如果低权限用户对服务的配置文件具有写权限，就可以修改配置文件，实现提权；在 Linux 中，如果对`/etc/sudoers`文件具有写权限，就可以添加用户或修改用户的权限，以获取 root 权限。参考博客：[Windows 服务配置文件与 Linux sudoers 文件提权](https://blog.csdn.net/j1044957016/article/details/125071983)。
+
+
+*   **环境变量劫持**
+
+*   **Windows**：在 Windows 系统中，攻击者可以通过修改`PATH`环境变量，将恶意程序的路径添加到其中，使得系统在执行命令时优先执行恶意程序。例如，将恶意程序放在`C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup`目录下，然后将该目录添加到`PATH`变量中。参考博客：[windows环境变量滥用维权/提权](https://blog.csdn.net/2301_80115097/article/details/137497166?fromshare=blogdetail\&sharetype=blogdetail\&sharerId=137497166\&sharerefer=PC\&sharesource=m0_52016680\&sharefrom=from_link)。
+
+*   **Linux**：在 Linux 系统中，通过修改`LD_PRELOAD`环境变量，可以指定加载自定义的共享库。攻击者可以编写恶意的共享库，并将其路径设置为`LD_PRELOAD`的值，当程序运行时，就会加载恶意共享库，从而实现权限提升。参考博客：[使用LD\_Preload的Linux权限升级技巧](https://blog.csdn.net/weixin_30586085/article/details/96203714?fromshare=blogdetail&sharetype=blogdetail&sharerId=96203714&sharerefer=PC&sharesource=m0_52016680&sharefrom=from_link)。
+
+
+### 利用内核提权
+
+*   **Windows**：利用内核漏洞（如 CVE - 2020 - 0601，NTUSER.DLL 漏洞）提升权限。攻击者通过向目标系统发送特制的请求，触发内核中的漏洞，从而在内核层执行代码，获取最高权限。参考博客：[CVE-2020-0601漏洞详细分析](https://www.freebuf.com/vuls/225879.html)。
+
+
+*   **Linux**：通过脏牛、TCP Reboot 等漏洞攻击内核。例如，脏牛漏洞利用了内核内存管理中的缺陷，通过竞争条件来修改只读内存页面，从而实现权限提升。参考博客：[Linux脏牛(CVE-2016-5195)提权保姆级教程](https://blog.csdn.net/weixin_68408599/article/details/132332072)。
+
+
+### 利用凭证窃取与哈希传递提权
+
+*   **密码哈希提取**
+
+*   **Windows**：使用`Mimikatz`工具可以从内存中提取 NTLM 哈希或明文密码。在获取到系统的用户列表后，通过`Mimikatz`的相关命令可以获取每个用户的密码哈希信息。参考博客：[内网渗透神器（Mimikatz）——使用教程](https://blog.csdn.net/weixin_40412037/article/details/113348310)。
+
+*   **Linux**：从`/etc/shadow`或`/etc/passwd`文件中获取密码哈希，然后使用`John the Ripper`等工具进行破解。`/etc/shadow`文件中存储了用户的加密密码信息，通过提取其中的哈希值，并使用密码破解工具进行破解，可以获取用户的明文密码。参考博客：[Linux 密码哈希破解](https://blog.csdn.net/zsj2102/article/details/81166534)。
+
+
+*   **哈希传递（Pass - the - Hash）**：在 Windows 环境中，利用已获取的 NTLM 哈希值进行认证，无需破解明文密码。通过`psexec`或`wmiexec`等工具，使用哈希值进行远程登录，从而在不同主机之间传递权限。参考博客：[内网渗透之横向移动 -- 哈希传递攻击研究](https://www.freebuf.com/articles/web/291812.html)。
+
+
+### 利用容器与虚拟化环境提权
+
+*   **Docker 提权**
+
+*   挂载主机目录（如`/var/run/docker.sock`）：通过将主机的`/var/run/docker.sock`文件挂载到容器内，容器内的进程就可以通过该文件与主机的 Docker 守护进程进行通信，从而获取宿主机的控制权。参考博客：[普通用户借助Docker容器提权思路分享](https://www.freebuf.com/articles/system/170783.html)。
+
+*   利用容器逃逸漏洞（如 CVE - 2019 - 5736）：容器逃逸漏洞可以使攻击者突破容器的限制，访问宿主机的资源。通过利用这些漏洞，攻击者可以在容器内执行特定的代码，从而实现提权。参考博客：[docker逃逸漏洞复现（CVE-2019-5736）](https://www.freebuf.com/articles/web/258398.html)。
+
+
+*   **VMware/Hyper - V 提权**：利用虚拟机软件漏洞（如 VMware Workstation 的 VMCI 服务漏洞）提权。攻击者通过利用虚拟机软件中的漏洞，在虚拟机内部执行特定的代码，从而突破虚拟机的限制，获取宿主机的权限。参考博客：[基础篇——VMware&提权初见](https://www.cnblogs.com/yaoguyuan/p/18249497)。
+
+
+### 利用工具与脚本提权
+
+*   **自动化提权工具**
+
+*   **Windows**：`PowerUp`是一个用于 Windows 系统的提权工具，它可以检测系统中存在的可利用的服务、计划任务等，并提供相应的提权方法。`WinPEAS`可以收集系统信息，查找可能存在的提权漏洞。`Sherlock`则主要用于扫描系统中存在的未打补丁的漏洞。参考博客：[Windows 自动化提权工具 PowerUp、WinPEAS 和 Sherlock](https://blog.csdn.net/j1044957016/article/details/125071983)。
+
+*   **Linux**：`LinPEAS`用于收集 Linux 系统的信息，帮助发现潜在的提权漏洞。`pspy`可以监控系统中的进程，查找可能存在的权限提升机会。`linux - exploit - suggester`则根据系统信息推荐可能的内核漏洞利用方式。参考博客：[Linux 自动化提权工具 LinPEAS、pspy 和 linux - exploit - suggester](https://blog.csdn.net/qq_63844103/article/details/128913977)。
+
+
+*   **脚本语言提权**：在 Linux 系统中，如果`python`等脚本语言具有`suid`权限，或者可以通过`sudo`以高权限执行，攻击者就可以编写恶意脚本，利用这些权限来提升自己的权限。例如，通过编写一个简单的 Python 脚本，在脚本中执行系统命令，然后使用`sudo`或利用`suid`权限来运行脚本，从而获取高权限。
+
+
+### 利用横向移动与域环境提权
+
+*   **域内提权**
+
+*   **Kerberos 黄金票据 / 白银票据**：黄金票据是伪造的 TGT（Ticket - Granting Ticket），攻击者可以使用黄金票据来获取任意用户的权限。白银票据是伪造的 ST（Service Ticket），可以用于访问特定的服务。通过伪造这些票据，攻击者可以在域环境中获取域管理员权限。参考博客：[内网渗透：三、Kerberos协议及票据（黄金和白银）伪造](https://blog.csdn.net/liu_jia_liang/article/details/123021702?fromshare=blogdetail\&sharetype=blogdetail\&sharerId=123021702\&sharerefer=PC\&sharesource=m0_52016680\&sharefrom=from_link)。
+
+*   **组策略对象（GPO）滥用**：攻击者可以通过修改 GPO 来部署恶意软件或脚本。例如，通过在 GPO 中设置登录脚本或启动脚本，当用户登录或系统启动时，就会执行恶意脚本，从而实现提权。参考博客：[GPO组策略以及滥用GPO以及配置不当导致的攻击链路](https://www.cnblogs.com/zpchcbd/p/12932181.html)。
+
+
+*   **横向移动**：使用`PsExec`、`WMI`、`PowerShell Remoting`等工具在域内不同主机间传播权限。例如，通过`PsExec`工具，可以在一台主机上以系统权限执行命令，并将命令发送到其他主机上执行，从而实现横向移动和权限提升。参考博客：[深入解析 Windows 域环境中的横向移动、域认证与哈希传递攻击](https://blog.csdn.net/m0_57836225/article/details/145998422?fromshare=blogdetail&sharetype=blogdetail&sharerId=145998422&sharerefer=PC&sharesource=m0_52016680&sharefrom=from_link)。
+
